@@ -5,3 +5,4 @@ __pycache__/
 
 # Ignore the specific file you don't want to track
 semantic_similarity.py
+__pycache__
