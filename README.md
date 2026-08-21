@@ -1,2 +1,2 @@
-# Semantic-Song-Search-
+# Semantic-Song-Search
 Find songs based on semantic and lyrical context
