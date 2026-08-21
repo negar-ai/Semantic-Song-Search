@@ -3,15 +3,16 @@ import pandas as pd
 import numpy as np
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
-from preprocessing import preprocess_lyrics, preprocess_title
+from preprocessing import preprocess_lyrics, preprocess_title, preprocess_artist
 
 # nltk.download('stopwords')
 
 data = pd.read_csv('dataset/Songs.csv')
 data = data.dropna(subset=["Lyrics"]).reset_index(drop=True)
-stop_words = set(stopwords.words('english'))
+# stop_words = set(stopwords.words('english'))
 data['Lyrics_cleaned'] = data['Lyrics'].apply(preprocess_lyrics)
 data['Title_cleaned'] = data['Title'].apply(preprocess_title)
+data['Artist_cleaned'] = data['Artist'].apply(preprocess_artist)
 
 # Sentence Transformer
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
@@ -34,6 +35,6 @@ np.save('embeddings/lyrics_embeddings.npy' ,lyrics_embeddings)
 
 
 # save metadata
-data[['Title', 'Artist', 'Lyrics', 'Title_cleaned', 'Lyrics_cleaned']].to_csv('embeddings/metadata.csv', index=False)
+data[['Title', 'Artist', 'Lyrics', 'Title_cleaned','Artist_cleaned', 'Lyrics_cleaned']].to_csv('embeddings/metadata.csv', index=False)
 
 # print(data[['Title', 'Title_cleaned', 'Lyrics_cleaned']].head())

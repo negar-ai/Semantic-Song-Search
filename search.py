@@ -3,6 +3,7 @@ import numpy as np
 from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from preprocessing import preprocess_query
+from song_lookup import find_song
 
 # load the embeddings and metadata
 title_embeddings = np.load('embeddings/title_embeddings.npy')
@@ -11,20 +12,39 @@ song_embeddings = np.load('embeddings/song_embeddings.npy')
 data = pd.read_csv('embeddings/metadata.csv')
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-query = "missing someone after breakup"
-query = preprocess_query(query)
+def _rank_by_embedding(query_embedding, k=5, exclude_index=None):
+    similarity_score = cosine_similarity(query_embedding, song_embeddings).flatten()
+    if exclude_index is not None:
+        similarity_score[exclude_index] = -1  # keep the queried song out of its own results
+    top_indices = np.argsort(similarity_score)[-k:][::-1]
+    return [{
+        'Title': data.iloc[i]['Title'],
+        'Artist': data.iloc[i]['Artist'],
+        'Similarity': similarity_score[i],
+        'Lyrics': data.iloc[i]['Lyrics']
+        }
+        for i in top_indices
+            ]
 
-query_embedding = model.encode([query], normalize_embeddings=True)
+def search_by_text(query_text, k=5):
+    query = preprocess_query(query_text)
+    query_embedding = model.encode([query], normalize_embeddings=True)
+    return { "status": "ok", "results": _rank_by_embedding(query_embedding, k=k)}
 
-similarity_score = cosine_similarity(query_embedding, song_embeddings).flatten()
+def search_by_song(title, artist=None, k=5):
+    lookup_result = find_song(data, title, artist = artist)
+    if lookup_result["status"] in ("not_found", "ambiguous", "fuzzy"):
+        return lookup_result # caller/UI should ask user to disambiguous
+    matched_song = lookup_result["match"]
+    matched_index = matched_song.name
+    query_embedding = model.encode([matched_song["Lyrics_cleaned"]], normalize_embeddings=True)
 
-top_indices = similarity_score.argsort()[-3:][::-1]
-results = []
-for index in top_indices:
-    results.append({
-        'Title': data.iloc[index]['Title'],
-        'Artist': data.iloc[index]['Artist'],
-        'Similarity': similarity_score[index],
-        'Lyrics': data.iloc[index]['Lyrics']
-    })
-print(results)
+    return {
+        "status": "ok",
+        "matched_song": {"Title": matched_song["Title"], "Artist": matched_song["Artist"]},
+        "results": _rank_by_embedding(query_embedding, k=k, exclude_index=matched_index)
+    }
+
+if __name__ == "__main__":
+    print(search_by_text("missing someone after breakup"))
+    print(search_by_song("Someone Like You", artist="Adele"))

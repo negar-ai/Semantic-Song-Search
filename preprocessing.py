@@ -22,3 +22,9 @@ def preprocess_query(query):
     # Remove punctuation
     query = ''.join(char for char in query if char.isalnum() or char.isspace())
     return re.sub(r'\s+', ' ', query).strip()  # Normalize whitespace
+
+# punctuation matters for the artist 
+def preprocess_artist(artist):
+    artist = artist.lower()
+    artist = re.sub(r'\s+', ' ', artist).strip()
+    return artist
