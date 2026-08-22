@@ -4,6 +4,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from preprocessing import preprocess_query
 from song_lookup import find_song
+from embedding_utils import combine_title_lyrics
 
 # load the embeddings and metadata
 title_embeddings = np.load('embeddings/title_embeddings.npy')
@@ -23,8 +24,7 @@ def _rank_by_embedding(query_embedding, k=5, exclude_index=None):
         'Similarity': similarity_score[i],
         'Lyrics': data.iloc[i]['Lyrics']
         }
-        for i in top_indices
-            ]
+        for i in top_indices]
 
 def search_by_text(query_text, k=5):
     query = preprocess_query(query_text)
@@ -35,9 +35,14 @@ def search_by_song(title, artist=None, k=5):
     lookup_result = find_song(data, title, artist = artist)
     if lookup_result["status"] in ("not_found", "ambiguous", "fuzzy"):
         return lookup_result # caller/UI should ask user to disambiguous
+
     matched_song = lookup_result["match"]
     matched_index = matched_song.name
-    query_embedding = model.encode([matched_song["Lyrics_cleaned"]], normalize_embeddings=True)
+
+    title_embedding = model.encode([matched_song["Title_cleaned"]], normalize_embeddings=True)[0]
+    lyrics_embedding = model.encode([matched_song["Lyrics_cleaned"]], normalize_embeddings=True)[0]
+
+    query_embedding = combine_title_lyrics(title_embedding, lyrics_embedding, matched_song["Title_cleaned"]).reshape(1,-1)
 
     return {
         "status": "ok",
@@ -46,5 +51,5 @@ def search_by_song(title, artist=None, k=5):
     }
 
 if __name__ == "__main__":
-    print(search_by_text("missing someone after breakup"))
-    print(search_by_song("Someone Like You", artist="Adele"))
+    print(search_by_text("being naughty in finding love"))
+    print(search_by_song("blanck spcace", artist="taylor swift"))

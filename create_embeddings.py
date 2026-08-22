@@ -4,6 +4,7 @@ import numpy as np
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
 from preprocessing import preprocess_lyrics, preprocess_title, preprocess_artist
+from embedding_utils import combine_title_lyrics_batch
 
 # nltk.download('stopwords')
 
@@ -25,8 +26,7 @@ lyrics_embeddings = model.encode(lyrics_list, batch_size= 32, normalize_embeddin
 defaut_ALPHA = 0.65 # ALPHA is the weight we choose for lyrics embeddings
 is_empty_title = data['Title_cleaned'].str.strip().eq('')
 alpha = np.where(is_empty_title, 1, defaut_ALPHA)
-song_embeddings = ((1-alpha)[:,None] * title_embeddings + alpha[:,None] * lyrics_embeddings)
-song_embeddings = song_embeddings / np.linalg.norm( song_embeddings, axis=1, keepdims=True )
+song_embeddings = combine_title_lyrics_batch(title_embeddings, lyrics_embeddings, data['Title_cleaned'].tolist())
 
 # save the embeddings for later use
 np.save('embeddings/song_embeddings.npy', song_embeddings)
