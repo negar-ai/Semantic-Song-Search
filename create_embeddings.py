@@ -4,7 +4,7 @@ import numpy as np
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
 from preprocessing import preprocess_lyrics, preprocess_title, preprocess_artist
-from embedding_utils import combine_title_lyrics_batch
+from embedding_utils import combine_title_lyrics_batch, checkpointed_encode
 
 # nltk.download('stopwords')
 
@@ -20,8 +20,11 @@ model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 lyrics_list = data['Lyrics_cleaned'].tolist()
 title_list = data['Title_cleaned'].fillna('').tolist()
 
-title_embeddings = model.encode(title_list, batch_size= 32, normalize_embeddings=True, show_progress_bar= True)
-lyrics_embeddings = model.encode(lyrics_list, batch_size= 32, normalize_embeddings=True, show_progress_bar= True)
+title_embeddings = checkpointed_encode(model, title_list,
+checkpoint_path='embeddings/checkpoints/title', batch_size= 32)
+lyrics_embeddings = checkpointed_encode(model, lyrics_list,
+checkpoint_path='embeddings/checkpoints/lyrics', batch_size= 32)
+
 
 defaut_ALPHA = 0.65 # ALPHA is the weight we choose for lyrics embeddings
 is_empty_title = data['Title_cleaned'].str.strip().eq('')

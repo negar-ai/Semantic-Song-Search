@@ -7,8 +7,8 @@ from song_lookup import find_song
 from embedding_utils import combine_title_lyrics
 
 # load the embeddings and metadata
-title_embeddings = np.load('embeddings/title_embeddings.npy')
-lyrics_embeddings = np.load('embeddings/lyrics_embeddings.npy')
+title_embeddings = np.load('embeddings/checkpoints/title_embeddings.npy')
+lyrics_embeddings = np.load('embeddings/checkpoints/lyrics_embeddings.npy')
 song_embeddings = np.load('embeddings/song_embeddings.npy')
 data = pd.read_csv('embeddings/metadata.csv')
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
