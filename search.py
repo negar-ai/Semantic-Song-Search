@@ -4,7 +4,7 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from preprocessing import preprocess_query
 from song_lookup import find_song
-from embedding_utils import combine_title_lyrics
+from embedding_utils import combine_title_lyrics, embed_lyrics_single
 
 # load the embeddings and metadata
 title_embeddings = np.load('embeddings/checkpoints/title_embeddings.npy')
@@ -40,7 +40,8 @@ def search_by_song(title, artist=None, k=5):
     matched_index = matched_song.name
 
     title_embedding = model.encode([matched_song["Title_cleaned"]], normalize_embeddings=True)[0]
-    lyrics_embedding = model.encode([matched_song["Lyrics_cleaned"]], normalize_embeddings=True)[0]
+    lyrics_embedding = embed_lyrics_single(model, matched_song["Lyrics_cleaned"])
+    # lyrics_embedding = model.encode([matched_song["Lyrics_cleaned"]], normalize_embeddings=True)[0]
 
     query_embedding = combine_title_lyrics(title_embedding, lyrics_embedding, matched_song["Title_cleaned"]).reshape(1,-1)
 

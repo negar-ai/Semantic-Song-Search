@@ -4,7 +4,7 @@ import numpy as np
 from nltk.corpus import stopwords
 from sentence_transformers import SentenceTransformer
 from preprocessing import preprocess_lyrics, preprocess_title, preprocess_artist
-from embedding_utils import combine_title_lyrics_batch, checkpointed_encode
+from embedding_utils import combine_title_lyrics_batch, checkpointed_encode, build_chunk_mapping, pool_chunk_embeddings
 
 # nltk.download('stopwords')
 
@@ -20,17 +20,27 @@ model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 lyrics_list = data['Lyrics_cleaned'].tolist()
 title_list = data['Title_cleaned'].fillna('').tolist()
 
+lyrics_chunks, chunk_song_indices = build_chunk_mapping(lyrics_list)
+
+
 title_embeddings = checkpointed_encode(model, title_list,
 checkpoint_path='embeddings/checkpoints/title', batch_size= 32)
-lyrics_embeddings = checkpointed_encode(model, lyrics_list,
-checkpoint_path='embeddings/checkpoints/lyrics', batch_size= 32)
+# lyrics_embeddings = checkpointed_encode(model, lyrics_list,
+# checkpoint_path='embeddings/checkpoints/lyrics', batch_size= 32)
+
+# ++
+chunk_embeddings = checkpointed_encode(model, lyrics_chunks,
+checkpoint_path='embeddings/checkpoints/lyrics', batch_size=32)
+lyrics_embeddings = pool_chunk_embeddings(chunk_embeddings, chunk_song_indices, num_songs=len(data))
+# ++
 
 
-defaut_ALPHA = 0.65 # ALPHA is the weight we choose for lyrics embeddings
-is_empty_title = data['Title_cleaned'].str.strip().eq('')
-alpha = np.where(is_empty_title, 1, defaut_ALPHA)
+
+
+# DEFAULT_ALPHA = 0.8 # ALPHA is the weight we choose for lyrics embeddings
+# is_empty_title = data['Title_cleaned'].str.strip().eq('')
+# alpha = np.where(is_empty_title, 1, DEFAULT_ALPHA)
 song_embeddings = combine_title_lyrics_batch(title_embeddings, lyrics_embeddings, data['Title_cleaned'].tolist())
-
 # save the embeddings for later use
 np.save('embeddings/song_embeddings.npy', song_embeddings)
 np.save('embeddings/title_embeddings.npy' ,title_embeddings)

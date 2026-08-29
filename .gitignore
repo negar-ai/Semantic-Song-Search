@@ -5,4 +5,5 @@ __pycache__/
 
 # Ignore the specific file you don't want to track
 semantic_similarity.py
+hub_check.py
 __pycache__
