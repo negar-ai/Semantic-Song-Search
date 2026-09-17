@@ -1,8 +1,5 @@
 import re
 
-from matplotlib.pyplot import title
-
-
 def preprocess_lyrics(lyrics):
     lyrics = lyrics.lower()
     # Remove dataset artifacts
