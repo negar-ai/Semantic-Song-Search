@@ -4,14 +4,21 @@ from sentence_transformers import SentenceTransformer
 from sklearn.metrics.pairwise import cosine_similarity
 from preprocessing import preprocess_query
 from song_lookup import find_song
-from embedding_utils import combine_title_lyrics, embed_lyrics_single
+from embedding_utils import combine_title_lyrics, embed_lyrics_single, combine_title_lyrics_batch
 
 # load the embeddings and metadata
-title_embeddings = np.load('embeddings/checkpoints/title_embeddings.npy')
-lyrics_embeddings = np.load('embeddings/checkpoints/lyrics_embeddings.npy')
-song_embeddings = np.load('embeddings/song_embeddings.npy')
+title_embeddings = np.load('embeddings/title_embeddings.npy')
+lyrics_embeddings = np.load('embeddings/lyrics_embeddings.npy')
 data = pd.read_csv('embeddings/metadata.csv')
-model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
+
+song_embeddings = combine_title_lyrics_batch(
+    title_embeddings, lyrics_embeddings, data['Title_cleaned'].fillna('').tolist(), alpha=1.0
+)
+song_embeddings = song_embeddings / np.linalg.norm(song_embeddings, axis=1, keepdims=True)
+np.save('embeddings/song_embeddings.npy', song_embeddings)
+
+# song_embeddings = np.load('embeddings/song_embeddings.npy')
+model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
 
 def _rank_by_embedding(query_embedding, k=5, exclude_index=None):
     similarity_score = cosine_similarity(query_embedding, song_embeddings).flatten()
@@ -19,10 +26,10 @@ def _rank_by_embedding(query_embedding, k=5, exclude_index=None):
         similarity_score[exclude_index] = -1  # keep the queried song out of its own results
     top_indices = np.argsort(similarity_score)[-k:][::-1]
     return [{
-        'Title': data.iloc[i]['Title'],
-        'Artist': data.iloc[i]['Artist'],
+        "song": data.iloc[i]["song"],
+        "artist": data.iloc[i]["artist"],
         'Similarity': similarity_score[i],
-        'Lyrics': data.iloc[i]['Lyrics']
+        "text": data.iloc[i]["text"]
         }
         for i in top_indices]
 
@@ -47,10 +54,11 @@ def search_by_song(title, artist=None, k=5):
 
     return {
         "status": "ok",
-        "matched_song": {"Title": matched_song["Title"], "Artist": matched_song["Artist"]},
+        "matched_song": {"song": matched_song["song"], "artist": matched_song["artist"]},
         "results": _rank_by_embedding(query_embedding, k=k, exclude_index=matched_index)
     }
 
 if __name__ == "__main__":
-    print(search_by_text("being naughty in finding love"))
-    print(search_by_song("blanck spcace", artist="taylor swift"))
+    print(search_by_text("a holly song about jesus and how he sacrificed himself for me"))
+    # print(search_by_text("being naughty in finding love"))
+    # print(search_by_song("blanck spcace", artist="taylor swift"))

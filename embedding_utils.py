@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-DEFAULT_ALPHA = 0.8 # ALPHA is the weight we choose for lyrics embeddings
+DEFAULT_ALPHA = 0.9 # ALPHA is the weight we choose for lyrics embeddings
 DEFAULT_CHUNK_SIZE = 150
 DEFAULT_CHUNK_OVERLAP = 30
 
