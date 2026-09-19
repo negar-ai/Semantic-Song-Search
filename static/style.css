@@ -60,6 +60,18 @@ input {
     color: #eee;
 }
 
+input, textarea {
+    width: 100%;
+    padding: 0.7rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    border-radius: 6px;
+    background: #222;
+    color: #eee;
+    font-family: inherit;   /* textareas don't inherit font by default in some browsers */
+    resize: vertical;        /* lets the user drag to resize if they want */
+}
+
 button:not(.tab-button) {
     padding: 0.7rem 1.5rem;
     background: #eb46a1;
