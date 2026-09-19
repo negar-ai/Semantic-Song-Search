@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Semantic Song Search</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='images/SSS.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename= 'style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Semantic Song Search</h1>
+        <div class="tabs">
+            <button class="tab-button active" data-tab="text-search"> search by theme </button>
+            <button class="tab-button" data-tab="song-search"> search by song</button>
+        </div>
+
+        <div id="text-search" class="tab-content active">
+            <input type="text" id="text-query" placeholder="Enter theme...">
+            <button id="text-search-btn" onclick="searchByText()">Search</button>
+        </div>
+
+        <div id="song-search" class="tab-content">
+            <input type="text" id="song-title" placeholder="Song title">
+            <input type="text" id="song-artist" placeholder="Artist (optional)">
+            <button id="song-search-btn" onclick="searchBySong()">Search</button>
+        </div>
+        <div id="results"></div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

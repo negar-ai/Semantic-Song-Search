@@ -9,7 +9,7 @@ def find_song(data, title, artist=None, threshold=80, top_k = 5):
     # filter by artist if given
     if artist is not None:
         artist_clean = preprocess_artist(artist)
-        artist_scores = process.extract(artist_clean, candidates['Artist'].str.lower(),
+        artist_scores = process.extract(artist_clean, candidates['Artist_cleaned'],
         scorer = fuzz.WRatio, limit = None)
         good_artist_indices = [idx for _, score, idx in artist_scores if score >= threshold]
         if good_artist_indices:
