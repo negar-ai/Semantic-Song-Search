@@ -22,32 +22,44 @@ def checkpointed_encode(model, texts, checkpoint_path, batch_size = 32):
 
     total = len(texts)
     dim = model.get_embedding_dimension()
+    expected_shape = (total, dim)
+    os.makedirs(os.path.dirname(emb_path) or ".", exist_ok=True)
 
     if os.path.exists(emb_path) and os.path.exists(progress_path):
-        embeddings = np.load(emb_path)
+        embeddings = np.lib.format.open_memmap(emb_path, mode="r+")
+        if embeddings.shape != expected_shape:
+            raise ValueError(
+                f"Checkpoint {emb_path} has shape {embeddings.shape}, "
+                f"but the current model/data requires {expected_shape}. "
+                "Delete the checkpoint and progress file to restart."
+            )
         with open(progress_path) as f:
             done = int(f.read().strip())
+        if not 0 <= done <= total:
+            raise ValueError(f"Invalid checkpoint progress {done} for {total} texts")
         print(f"Resuming from checkpoint: {done}/{total} already encoded...")
     else:
-        embeddings = np.zeros((total, dim), dtype=np.float32)
+        embeddings = np.lib.format.open_memmap(
+            emb_path, mode="w+", dtype=np.float32, shape=expected_shape
+        )
         done = 0
 
     while done < total:
         batch_end = min(done + batch_size, total)
         batch = texts[done:batch_end]
 
-        batch_embeddings = model.encode(batch, normalize_embeddings = True)
+        batch_embeddings = model.encode(batch, normalize_embeddings=True)
         embeddings[done:batch_end] = batch_embeddings
+        embeddings.flush()
 
         done = batch_end
-
-        np.save(emb_path, embeddings)
-        with open(progress_path, 'w') as f :
+        with open(progress_path, "w") as f:
             f.write(str(done))
         if done % (batch_size * 10) == 0 or done == total:
             print(f"Encoded {done}/{total}")
 
-    os.remove(progress_path)
+    if os.path.exists(progress_path):
+        os.remove(progress_path)
     return embeddings
 
 def chunk_text(text, chunk_size = DEFAULT_CHUNK_SIZE, overlap = DEFAULT_CHUNK_OVERLAP):
