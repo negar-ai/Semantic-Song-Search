@@ -1,3 +1,35 @@
+from huggingface_hub import hf_hub_download
+import os
+
+REPO_ID = "negar-ai/semantic-song-embeddings"  # same as before, replace with yours
+
+def ensure_embeddings_downloaded():
+    os.makedirs('embeddings', exist_ok=True)
+    files_needed = [
+        "song_embeddings.npy",
+        "title_embeddings.npy",
+        "lyrics_embeddings.npy",
+        "metadata.csv",
+    ]
+    for filename in files_needed:
+        local_path = os.path.join('embeddings', filename)
+        if not os.path.exists(local_path):
+            print(f"Downloading {filename} from Hugging Face Hub...")
+            downloaded_path = hf_hub_download(
+                repo_id=REPO_ID,
+                filename=filename,
+                repo_type="dataset",
+            )
+            # hf_hub_download saves to its own cache location; copy it to where search.py expects it
+            import shutil
+            shutil.copy(downloaded_path, local_path)
+        else:
+            print(f"{filename} already present, skipping download.")
+
+ensure_embeddings_downloaded()
+
+from search import search_by_text, search_by_song  # import AFTER ensuring files exist
+
 from flask import Flask, render_template, request, jsonify
 from search import search_by_text, search_by_song
 
