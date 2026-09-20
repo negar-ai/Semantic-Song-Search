@@ -28,8 +28,6 @@ def ensure_embeddings_downloaded():
 
 ensure_embeddings_downloaded()
 
-from search import search_by_text, search_by_song  # import AFTER ensuring files exist
-
 from flask import Flask, render_template, request, jsonify
 from search import search_by_text, search_by_song
 
@@ -62,4 +60,5 @@ def api_search_song():
     return jsonify(result)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 7860))
+    app.run(host="0.0.0.0", port=port, debug=False)
