@@ -100,6 +100,12 @@ function renderResults(data) {
     return;
   }
 
+  if (data.status === 'fuzzy') {
+    const names = data.candidates.map(c => c.song + ' by ' + c.artist).join(', ');
+    container.textContent = 'No exact match. Did you mean: ' + names + '? Try the exact title and add an artist name.';
+    return;
+  }
+
   if (data.matched_song) {
     container.innerHTML += `<p> 🥳 Songs similar to ${data.matched_song.song} by ${data.matched_song.artist}:</p>`;
   }

@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -15,10 +16,10 @@ song_embeddings = combine_title_lyrics_batch(
     title_embeddings, lyrics_embeddings, data['Title_cleaned'].fillna('').tolist(), alpha=1.0
 )
 song_embeddings = song_embeddings / np.linalg.norm(song_embeddings, axis=1, keepdims=True)
-np.save('embeddings/song_embeddings.npy', song_embeddings)
+#np.save('embeddings/song_embeddings.npy', song_embeddings)
 
 # song_embeddings = np.load('embeddings/song_embeddings.npy')
-model = SentenceTransformer("sentence-transformers/all-mpnet-base-v2")
+model = SentenceTransformer(os.environ.get("MODEL_PATH", "sentence-transformers/all-mpnet-base-v2"))
 
 def _rank_by_embedding(query_embedding, k=5, exclude_index=None):
     similarity_score = cosine_similarity(query_embedding, song_embeddings).flatten()
@@ -38,10 +39,24 @@ def search_by_text(query_text, k=5):
     query_embedding = model.encode([query], normalize_embeddings=True)
     return { "status": "ok", "results": _rank_by_embedding(query_embedding, k=k)}
 
+def _json_safe_lookup(lookup_result):
+    """Turn find_song's not_found/ambiguous/fuzzy result into plain JSON-safe data."""
+    status = lookup_result["status"]
+    if status == "not_found":
+        return {"status": "not_found"}
+    candidates = []
+    for c in lookup_result["candidates"]:
+        if status == "fuzzy":  # fuzzy candidates are (row, score) pairs
+            row, score = c
+            candidates.append({"song": row["song"], "artist": row["artist"], "score": float(score)})
+        else:  # ambiguous candidates are dicts
+            candidates.append({"song": c["song"], "artist": c["artist"]})
+    return {"status": status, "candidates": candidates}
+
 def search_by_song(title, artist=None, k=5):
     lookup_result = find_song(data, title, artist = artist)
     if lookup_result["status"] in ("not_found", "ambiguous", "fuzzy"):
-        return lookup_result # caller/UI should ask user to disambiguous
+        return _json_safe_lookup(lookup_result)
 
     matched_song = lookup_result["match"]
     matched_index = matched_song.name

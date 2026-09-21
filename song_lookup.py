@@ -3,7 +3,7 @@ from preprocessing import preprocess_title, preprocess_lyrics, preprocess_artist
 import pandas as pd
 
 def find_song(data, title, artist=None, threshold=80, top_k = 5):
-    title_clean = preprocess_artist(title)
+    title_clean = preprocess_title(title)
     candidates = data
 
     # filter by artist if given
