@@ -4,7 +4,9 @@ __pycache__/
 *.pyo
 
 # Ignore the specific file you don't want to track
+embeddings/
 semantic_similarity.py
+upload_embeddings.py
 hub_check.py
 test.py
 __pycache__
