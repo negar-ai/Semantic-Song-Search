@@ -6,7 +6,7 @@ REPO_ID = "negar-ai/semantic-song-embeddings"  # same as before, replace with yo
 def ensure_embeddings_downloaded():
     os.makedirs('embeddings', exist_ok=True)
     files_needed = [
-        "song_embeddings.npy",
+        # "song_embeddings.npy",
         "title_embeddings.npy",
         "lyrics_embeddings.npy",
         "metadata.csv",
